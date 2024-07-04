@@ -410,7 +410,6 @@ function saveUserQuizData() {
     const totalScore = calculateTotalScore();
     const conclusion = getConclusion(totalScore);
     userQuizData[currentUser] = {
-        ...userQuizData[currentUser],
         quizCompleted: true,
         completionDate: new Date().toISOString(),
         totalScore: totalScore,
@@ -419,6 +418,7 @@ function saveUserQuizData() {
         conclusion: conclusion
     };
     localStorage.setItem('userQuizData', JSON.stringify(userQuizData));
+    console.log('User quiz data saved:', userQuizData[currentUser]);
 }
 
 function getConclusion(totalScore) {
