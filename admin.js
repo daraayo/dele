@@ -1,70 +1,84 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">Admin Dashboard</a>
-            <button id="admin-logout-btn" class="btn btn-outline-light">Logout</button>
-        </div>
-    </nav>
+document.addEventListener('DOMContentLoaded', function() {
+    let adminLoggedIn = false;
 
-    <div class="container mt-5">
-        <div id="admin-login" class="card">
-            <div class="card-body">
-                <h2 class="card-title text-center mb-4">Admin Login</h2>
-                <input type="text" id="admin-username" class="form-control mb-3" placeholder="Username">
-                <input type="password" id="admin-password" class="form-control mb-3" placeholder="Password">
-                <button id="admin-login-btn" class="btn btn-primary w-100">Login</button>
-            </div>
-        </div>
+    function adminLogin() {
+        const username = document.getElementById('admin-username').value;
+        const password = document.getElementById('admin-password').value;
         
+        console.log('Attempting admin login with:', username, password);
+    
+        let adminCredentials = JSON.parse(localStorage.getItem('adminCredentials'));
+        console.log('Stored admin credentials:', adminCredentials);
+    
+        if (adminCredentials && username === adminCredentials.username && password === adminCredentials.password) {
+            console.log('Admin login successful');
+            adminLoggedIn = true;
+            document.getElementById('admin-login').style.display = 'none';
+            document.getElementById('admin-dashboard').style.display = 'block';
+            loadDashboardData();
+        } else {
+            console.log('Admin login failed');
+            alert('Invalid admin credentials');
+        }
+    }
+    
+    function adminLogout() {
+        adminLoggedIn = false;
+        document.getElementById('admin-login').style.display = 'block';
+        document.getElementById('admin-dashboard').style.display = 'none';
+    }
 
-        <div id="admin-dashboard" style="display: none;">
-            <h2 class="mb-4">Website Statistics</h2>
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title">Total Registered Users</h5>
-                            <p id="total-users" class="card-text display-4"></p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title">Completed Quizzes</h5>
-                            <p id="completed-quizzes" class="card-text display-4"></p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title">Incomplete Quizzes</h5>
-                            <p id="incomplete-quizzes" class="card-text display-4"></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <h3 class="mt-5 mb-3">User Details</h3>
-            <table class="table table-striped">
-                
-                <tbody id="user-details">
-                    <!-- User details will be inserted here -->
-                </tbody>
-            </table>
-        </div>
-    </div>
+    function loadDashboardData() {
+        let userQuizData = JSON.parse(localStorage.getItem('userQuizData')) || {};
+        
+        let totalUsers = Object.keys(userQuizData).length;
+        let completedQuizzes = 0;
+        let incompleteQuizzes = 0;
+        
+        document.getElementById('total-users').textContent = totalUsers;
+        
+        let userDetailsHTML = '<table class="table"><thead><tr><th>Username</th><th>Registration Date</th><th>Last Login</th><th>Browser</th><th>Quiz Status</th><th>Score</th><th>Conclusion</th></tr></thead><tbody>';
+        
+        for (let username in userQuizData) {
+            let userData = userQuizData[username];
+            let quizStatus = userData.quizCompleted ? 'Completed' : 'Incomplete';
+            let score = userData.quizCompleted ? userData.totalScore : 'N/A';
+            let conclusion = userData.quizCompleted ? userData.conclusion : 'N/A';
+            
+            if (userData.quizCompleted) {
+                completedQuizzes++;
+            } else {
+                incompleteQuizzes++;
+            }
+            
+            userDetailsHTML += `
+                <tr>
+                    <td>${username}</td>
+                    <td>${new Date(userData.registrationDate).toLocaleString()}</td>
+                    <td>${userData.lastLogin ? new Date(userData.lastLogin).toLocaleString() : 'N/A'}</td>
+                    <td>${userData.browser}</td>
+                    <td>${quizStatus}</td>
+                    <td>${score}</td>
+                    <td>${conclusion}</td>
+                </tr>
+            `;
+        }
+        
+        userDetailsHTML += '</tbody></table>';
+        
+        document.getElementById('completed-quizzes').textContent = completedQuizzes;
+        document.getElementById('incomplete-quizzes').textContent = incompleteQuizzes;
+        document.getElementById('user-details').innerHTML = userDetailsHTML;
+    }
+    
+    // Attach event listeners
+    document.getElementById('admin-login-btn').addEventListener('click', adminLogin);
+    document.getElementById('admin-logout-btn').addEventListener('click', adminLogout);
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="admin.js"></script>
-</body>
-</html>
+    // Check if admin is logged in when the page loads
+    if (adminLoggedIn) {
+        document.getElementById('admin-login').style.display = 'none';
+        document.getElementById('admin-dashboard').style.display = 'block';
+        loadDashboardData();
+    }
+});
